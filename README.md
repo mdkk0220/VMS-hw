@@ -7,14 +7,18 @@
 
 ## 과제 목록
 
-| 번호 | 주제 | 상태 | 핵심 산출물 |
-|---|---|---|---|
-| 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 · [요약](./01-os-install-network-test/SUMMARY.md) |
-| 2 | [네트워크 이중화(Bonding) 구성 테스트](./02-network-bonding/) | 예정 | |
-| 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 예정 | |
-| 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | |
-| 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 예정 | |
-| 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 예정 | |
+| 번호 | 주제 (요약) | 상태 | 핵심 산출물 | 상세 기록 |
+|---|---|---|---|---|
+| 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 | [DETAILS](./01-os-install-network-test/DETAILS.md) |
+| 2 | [네트워크 이중화(Bonding) 구성 테스트](./02-network-bonding/) | 예정 | | [DETAILS](./02-network-bonding/DETAILS.md) |
+| 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 예정 | | [DETAILS](./03-application-ha/DETAILS.md) |
+| 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | | [DETAILS](./04-windows11-optimization/DETAILS.md) |
+| 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 예정 | | [DETAILS](./05-network-basics/DETAILS.md) |
+| 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 예정 | | [DETAILS](./06-shell-script/DETAILS.md) |
+
+각 과제 폴더는 두 문서로 구성된다.
+- `README.md`: 표로 정리한 **요약**. 폴더에 들어가면 먼저 보인다.
+- `DETAILS.md`: 명령어, 출력, 장애 분석까지 담은 **상세 기록**.
 
 ## 실습 환경
 
@@ -39,7 +43,7 @@
 ```text
 VMS-hw/
 ├── README.md                        # 전체 목차와 실습 환경 (이 문서)
-├── 01-os-install-network-test/      # 과제 1
+├── 01-os-install-network-test/      # 과제 1 (README = 요약, DETAILS = 상세)
 ├── 02-network-bonding/              # 과제 2
 ├── 03-application-ha/               # 과제 3
 ├── 04-windows11-optimization/       # 과제 4
