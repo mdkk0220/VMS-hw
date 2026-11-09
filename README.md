@@ -9,7 +9,7 @@
 
 | 번호 | 주제 | 상태 | 핵심 산출물 |
 |---|---|---|---|
-| 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 |
+| 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 · [요약](./01-os-install-network-test/SUMMARY.md) |
 | 2 | [네트워크 이중화(Bonding) 구성 테스트](./02-network-bonding/) | 예정 | |
 | 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 예정 | |
 | 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | |

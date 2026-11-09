@@ -5,6 +5,8 @@
 
 `VirtualBox` `Rocky Linux 9.8` `Rocky Linux 8.10` `nmcli` `SSH` `DNS`
 
+**한눈에 보기: [SUMMARY.md](./SUMMARY.md)** (표로 정리한 요약본)
+
 ## 목표
 - 가상화 환경에 Rocky Linux 9.x와 8.10을 설치한다.
 - 외부(인터넷) 통신과 내부(호스트 PC · VM 간) 통신을 모두 확인한다.
