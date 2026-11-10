@@ -5,6 +5,55 @@
 ## 한 줄 요약
 node1을 복제해 node2를 만들고, 두 서버에 **active-backup bond를 2개(bond0, bond1)** 구성했습니다. 랜선을 하나 끊어도 ping 손실이 1~2개뿐인 것을 확인했고, 실제로 겪은 장애 3개와 일부러 낸 장애 2개를 원인부터 복구까지 기록했습니다. (진행 중: 장애 7-C, Rocky 8.10 구성)
 
+## 구성도
+
+```mermaid
+flowchart LR
+    PC["내 PC<br/>192.168.56.1"]
+
+    subgraph N1["node1 · Rocky 9.8"]
+        direction TB
+        A1["enp0s8<br/>192.168.56.11"]
+        B10["bond0 · 10.10.10.11"]
+        B11["bond1 · 10.20.20.11"]
+        P1a["enp0s9 (주)"] --- B10
+        P1b["enp0s10 (대기)"] --- B10
+        P1c["enp0s16 (주)"] --- B11
+        P1d["enp0s17 (대기)"] --- B11
+    end
+
+    subgraph N2["node2 · Rocky 9.8"]
+        direction TB
+        A2["enp0s8<br/>192.168.56.12"]
+        B20["bond0 · 10.10.10.12"]
+        B21["bond1 · 10.20.20.12"]
+        P2a["enp0s9 (주)"] --- B20
+        P2b["enp0s10 (대기)"] --- B20
+        P2c["enp0s16 (주)"] --- B21
+        P2d["enp0s17 (대기)"] --- B21
+    end
+
+    SW1(["내부 네트워크<br/>intnet-bond"])
+    SW2(["내부 네트워크<br/>intnet-bk"])
+    HO(["호스트 전용<br/>192.168.56.0/24"])
+
+    PC --- HO
+    HO --- A1
+    HO --- A2
+    P1a --- SW1
+    P1b --- SW1
+    P2a --- SW1
+    P2b --- SW1
+    P1c --- SW2
+    P1d --- SW2
+    P2c --- SW2
+    P2d --- SW2
+```
+
+- **bond0**와 **bond1**은 서로 다른 네트워크라 한쪽 장애가 다른 쪽에 영향을 주지 않습니다.
+- 평소에는 **(주)** 포트만 쓰고, 끊기면 **(대기)** 포트로 넘어갑니다.
+- SSH는 bond와 별도인 호스트 전용 네트워크(enp0s8)로 접속해, bond 실습 중에도 끊기지 않습니다.
+
 ---
 
 ## 1. 과제 요구사항과 결과
