@@ -20,8 +20,8 @@
 - [x] bond0 + bond1 구성 · 서로 독립 동작 확인
 - [x] 일부러 낸 장애 7-A (기본 경로 중복), 7-B (포트 이탈)
 - [x] 일부러 낸 장애 7-C (miimon=0)
-- [x] 재부팅 후 유지 확인 (node1)
-- [ ] Rocky 8.10(node3)에서도 동일하게 구성
+- [x] 재부팅 후 유지 확인 (node1 · node2 · node3)
+- [x] Rocky 8.10(node3)에서도 동일하게 구성 · 장애 전환
 
 ---
 
@@ -216,7 +216,72 @@ MII Status: up
 ```
 
 ### 재부팅 후 유지
-node1은 `uptime` 10분 상태(재부팅 후)에서 bond0 · bond1 모두 primary 활성, 포트 2개, miimon 100으로 설정 그대로 올라왔다. NetworkManager 프로파일로 만든 bond라 재부팅해도 유지된다.
+| 서버 | 확인 | 결과 |
+| --- | --- | --- |
+| node1 | 부팅 10분 뒤 | bond0 · bond1 모두 primary 활성, 포트 2개, miimon 100 |
+| node2 | 부팅 17분 뒤 | bond0 · bond1 포트 2개씩 |
+| node3 | `reboot` 직후 | bond0 활성 enp0s9, 포트 2개, 10.10.10.13, `Wired connection` 다시 생기지 않음 |
+
+---
+
+## 5. Rocky 8.10(node3)에서 bond0 구성
+
+### NIC 추가 (node3 전원 끈 상태, 스냅샷 `과제2-node3-NIC추가전` 뒤)
+```powershell
+VBoxManage modifyvm node3 --nic3 intnet --intnet3 intnet-bond --nicpromisc3 allow-all --cableconnected3 on
+VBoxManage modifyvm node3 --nic4 intnet --intnet4 intnet-bond --nicpromisc4 allow-all --cableconnected4 on
+```
+| 어댑터 | 장치 | MAC | 용도 |
+| --- | --- | --- | --- |
+| 3 | enp0s9 | 08:00:27:72:f3:6c | bond0 주 포트 |
+| 4 | enp0s10 | 08:00:27:2b:fa:39 | bond0 대기 포트 |
+
+### 자동 프로파일 정리
+9.8과 같이 새 NIC에 `Wired connection 1, 2`가 자동으로 생겼다. intnet-bond에는 DHCP 서버가 없어 연결되지 않은 상태(DEVICE `--`)였지만 `AUTOCONNECT yes`라 UUID로 지웠다. 8.10에서도 이 자동 프로파일은 `/run/NetworkManager/system-connections/`에 keyfile(`.nmconnection`) 형식으로 만들어진다. 직접 만든 프로파일만 ifcfg로 저장된다.
+
+### bond0 구성 (명령은 9.8과 같음)
+```bash
+nmcli con add type bond con-name bond0 ifname bond0 bond.options "mode=active-backup,miimon=100,primary=enp0s9,fail_over_mac=active"
+nmcli con mod bond0 ipv4.method manual ipv4.addresses 10.10.10.13/24 ipv6.method disabled
+nmcli con add type ethernet con-name bond0-p1 ifname enp0s9 master bond0 slave-type bond
+nmcli con add type ethernet con-name bond0-p2 ifname enp0s10 master bond0 slave-type bond
+nmcli con up bond0
+```
+
+생성된 파일 `/etc/sysconfig/network-scripts/ifcfg-bond0` (일부)
+```
+BONDING_OPTS="mode=active-backup fail_over_mac=active miimon=100 primary=enp0s9"
+TYPE=Bond
+BONDING_MASTER=yes
+BOOTPROTO=none
+DEFROUTE=yes
+ONBOOT=yes
+IPADDR=10.10.10.13
+PREFIX=24
+```
+`DEFROUTE=yes`지만 게이트웨이가 없어 기본 경로는 생기지 않는다. 나중에 `GATEWAY=`를 넣으면 7-A와 같은 문제가 생길 수 있다.
+
+### 9.8과 8.10 비교
+| 항목 | 9.8 (node1) | 8.10 (node3) |
+| --- | --- | --- |
+| 커널 | 5.14 | 4.18 |
+| 명령 | 같음 | 같음 |
+| 저장 파일 | `/etc/NetworkManager/system-connections/bond0.nmconnection` | `/etc/sysconfig/network-scripts/ifcfg-bond0` |
+| bond 옵션 | `[bond]` 섹션에 한 줄씩 | `BONDING_OPTS="…"` 한 줄, 공백 구분 |
+| 부팅 시 자동 연결 | `autoconnect` | `ONBOOT=yes` |
+| 활성화 메시지 | `controller waiting for ports` | `master waiting for slaves` (NetworkManager 버전 차이, 뜻은 같음) |
+
+### 통신과 장애 전환
+- node1 → node3, node2 → node3 ping 0% loss
+- node1에서 `ping -D -O 10.10.10.13`을 걸어 두고 node3 어댑터 3을 끊었다 연결: **101개 중 1개 손실**
+
+```
+764.8  bond0: (slave enp0s9): link status definitely down, disabling slave
+764.8  bond0: (slave enp0s10): making interface the new active one
+787.7  bond0: (slave enp0s9): link status definitely up, 1000 Mbps full duplex
+787.7  bond0: (slave enp0s9): making interface the new active one
+```
+enp0s9 `Link Failure Count: 1`, 복구 후 primary인 enp0s9로 돌아왔다. 9.8과 동작 · 메시지가 같다.
 
 ---
 
@@ -225,6 +290,7 @@ node1은 `uptime` 10분 상태(재부팅 후)에서 bond0 · bond1 모두 primar
 - 가상화 환경에서는 MAC 처리(`fail_over_mac`)가 실제 장비와 다르게 문제를 만든다. 패킷이 **어느 포트로 들어오는지**(`tcpdump -eni any`)를 보면 원인이 바로 보인다.
 - 이중화가 깨져도 통신은 계속될 수 있다. 상태 파일(`/proc/net/bonding`)을 숫자로 점검해야 한다.
 - 링크 감시(miimon)가 0이면 랜선이 빠져도 bond는 계속 up으로 보이고 로그도 없다. 감시 간격과 carrier를 함께 본다.
+- 8.10도 nmcli 명령은 같다. 설정 위치만 다르니(`ifcfg-bond0`) 서버 OS 버전부터 확인한다.
 - 기본 경로는 하나만. 문제가 생기면 `ip route get <목적지>`로 실제 나가는 길을 확인한다.
 
 ## 연결
