@@ -11,7 +11,7 @@
 |---|---|---|---|---|---|
 | 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 | [DETAILS](./01-os-install-network-test/DETAILS.md) | - |
 | 2 | [네트워크 이중화(Bonding) 구성 테스트](./02-network-bonding/) | 완료 | 9.8 bond 2개 · 8.10 bond 1개, 장애 전환 손실 1~2개, 장애 6건 기록 | [DETAILS](./02-network-bonding/DETAILS.md) | [CONCEPTS](./02-network-bonding/CONCEPTS.md) |
-| 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 예정 | | [DETAILS](./03-application-ha/DETAILS.md) | - |
+| 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 진행 중 | Keepalived VIP 전환, GTID 복제, 장애 3건 기록 | [DETAILS](./03-application-ha/DETAILS.md) | - |
 | 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | | [DETAILS](./04-windows11-optimization/DETAILS.md) | - |
 | 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 예정 | | [DETAILS](./05-network-basics/DETAILS.md) | - |
 | 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 예정 | | [DETAILS](./06-shell-script/DETAILS.md) | - |
