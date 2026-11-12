@@ -1,14 +1,14 @@
 # 진행 상황 (다음에 이어서 할 곳)
 
-> 마지막 갱신: 2026-11-10
+> 마지막 갱신: 2026-11-12
 
 ## 지금 위치
-**과제 2 · ④ 트러블슈팅 7-C 시작 전**
+**과제 2 · 8단계 node3(8.10) bonding 시작 전**
 
 | 과제 | 상태 |
 | --- | --- |
 | 1 | ✅ 완료 |
-| 2 | 🔄 7-A, 7-B 완료 → **다음 7-C** |
+| 2 | 🔄 트러블슈팅 완료(7-A · 7-B · 7-C) → **다음 node3 bonding** |
 | 3 ~ 6 | ⏳ 대기 |
 
 ## 서버 상태
@@ -22,13 +22,8 @@
 현재 bond 상태는 스냅샷 `과제2-bond1완료`와 같다. 이상하면 그 스냅샷으로 되돌리면 된다.
 
 ## 남은 순서
-1. **7-C · miimon=0** (약 5분)
-   - C-1: `grep "MII Polling" /proc/net/bonding/bond0` 로 현재 값(100) 기록
-   - C-2: node1 bond0을 `miimon=0`으로 바꾸고 재적용
-   - C-3: node2에서 `ping -D -O 10.10.10.11`, PC에서 `setlinkstate3 off` → 페일오버가 안 되는지 관찰
-   - C-4: `setlinkstate3 on`, `miimon=100`으로 되돌리고 정상 확인
-2. 재부팅 후 bond 유지 확인
-3. **node3(8.10) bonding** — 어댑터 3·4 추가, bond0 10.10.10.13, 색 프롬프트 적용, `uname -r` 확인
-4. 스냅샷 `과제2완료` (node1, node2, node3)
-5. 02 README·DETAILS 마무리 후 푸시
-6. 과제 3 시작
+1. node2 `uptime`으로 재부팅 후 유지 확인 (node1은 확인 완료)
+2. **node3(8.10) bonding**: 스냅샷 `과제2-node3-NIC추가전` → 어댑터 3·4 추가(intnet-bond) → bond0 10.10.10.13 → 생성된 `ifcfg-*` 확인 → node1과 ping · 장애 전환
+3. 스냅샷 `과제2완료` (node1, node2, node3)
+4. 02 README · DETAILS 마무리 후 푸시
+5. 과제 3 시작

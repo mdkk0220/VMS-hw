@@ -19,8 +19,8 @@
 - [x] bond0 (active-backup) 구성 · 장애 전환 · 복구 테스트
 - [x] bond0 + bond1 구성 · 서로 독립 동작 확인
 - [x] 일부러 낸 장애 7-A (기본 경로 중복), 7-B (포트 이탈)
-- [ ] 일부러 낸 장애 7-C (miimon=0)
-- [ ] 재부팅 후 유지 확인
+- [x] 일부러 낸 장애 7-C (miimon=0)
+- [x] 재부팅 후 유지 확인 (node1)
 - [ ] Rocky 8.10(node3)에서도 동일하게 구성
 
 ---
@@ -190,10 +190,33 @@ bond1            DOWN           08:00:27:1e:14:4e <NO-CARRIER,BROADCAST,MULTICAS
 | 모드 | `grep "Bonding Mode" /proc/net/bonding/bondN` | `active-backup (fail_over_mac active)` |
 | 포트 개수 | `grep -c "Slave Interface" /proc/net/bonding/bondN` | 2 |
 | 포트 링크 | `grep "MII Status" /proc/net/bonding/bondN` | 모두 `up` |
+| 감시 간격 | `grep "MII Polling" /proc/net/bonding/bondN` | 0이 아님 (100) |
 | 장애 이력 | `grep "Link Failure Count" /proc/net/bonding/bondN` | 지난 점검보다 늘었으면 원인 확인 |
 
-### 7-C · miimon=0 (예정)
-링크 감시를 끄면 활성 포트가 죽어도 bond가 알아채지 못해 페일오버가 일어나지 않는 것을 확인할 예정.
+### 7-C · 링크 감시가 꺼져 페일오버가 일어나지 않음 (일부러 재현)
+| 항목 | 내용 |
+| --- | --- |
+| 재현 | `nmcli con mod bond0 bond.options "mode=active-backup,miimon=0,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0` 후 PC에서 `setlinkstate3 off` |
+| 증상 | 대기 포트 enp0s10이 살아 있는데도 넘어가지 않음. **50개 중 26개 손실**, 링크를 다시 연결할 때까지 계속 (같은 동작을 miimon=100에서 했을 때는 1개 손실) |
+| 확인 | `MII Polling Interval (ms): 0`. 커널 `carrier`는 `0`인데 bond의 enp0s9 `MII Status`는 `up`, 활성 포트도 enp0s9 그대로. dmesg에 경고 없음 |
+| 원인 | 링크 감시가 꺼져 bond가 포트 상태를 다시 확인하지 않음 |
+| 조치 | `nmcli con mod bond0 bond.options "mode=active-backup,miimon=100,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0` |
+| 확인 | miimon 100, carrier 1, 포트 2개, bond0 · bond1 ping 0% loss |
+| 재발 방지 | 정기 점검에 감시 간격 추가. 장애가 의심되면 bond 상태와 `/sys/class/net/<포트>/carrier`를 비교 |
+
+끊긴 순간 node1 상태
+```
+Currently Active Slave: enp0s9
+MII Status: up
+Slave Interface: enp0s10
+MII Status: up
+Slave Interface: enp0s9
+MII Status: up
+0                      ← cat /sys/class/net/enp0s9/carrier
+```
+
+### 재부팅 후 유지
+node1은 `uptime` 10분 상태(재부팅 후)에서 bond0 · bond1 모두 primary 활성, 포트 2개, miimon 100으로 설정 그대로 올라왔다. NetworkManager 프로파일로 만든 bond라 재부팅해도 유지된다.
 
 ---
 
@@ -201,6 +224,7 @@ bond1            DOWN           08:00:27:1e:14:4e <NO-CARRIER,BROADCAST,MULTICAS
 - bond는 "묶었다"로 끝나지 않는다. 장애를 직접 내서 넘어가는지 봐야 이중화가 증명된다.
 - 가상화 환경에서는 MAC 처리(`fail_over_mac`)가 실제 장비와 다르게 문제를 만든다. 패킷이 **어느 포트로 들어오는지**(`tcpdump -eni any`)를 보면 원인이 바로 보인다.
 - 이중화가 깨져도 통신은 계속될 수 있다. 상태 파일(`/proc/net/bonding`)을 숫자로 점검해야 한다.
+- 링크 감시(miimon)가 0이면 랜선이 빠져도 bond는 계속 up으로 보이고 로그도 없다. 감시 간격과 carrier를 함께 본다.
 - 기본 경로는 하나만. 문제가 생기면 `ip route get <목적지>`로 실제 나가는 길을 확인한다.
 
 ## 연결
