@@ -76,6 +76,18 @@
 백신, 방화벽처럼 보안과 관련된 항목입니다. 성능보다 보안이 우선이고, 부하가 문제라면 끄는 대신 VDI용 설정으로 검사 시점을 분산합니다.
 </details>
 
+<details>
+<summary>Q5. "가상 PC가 아침 9시마다 느려요"라는 문의가 오면?</summary>
+
+같은 시각에 수십 대가 동시에 하는 일을 의심합니다. 로그인 폭주, 예약된 백신 검사, Windows Update, 조각 모음입니다. 가상 PC 한 대가 아니라 서버(호스트)의 CPU · 디스크 I/O를 함께 보고, 끄는 대신 시각을 분산하거나 골든 이미지에서 예약 작업을 정리합니다.
+</details>
+
+<details>
+<summary>Q6. SysMain(Superfetch)은 왜 끄나요?</summary>
+
+자주 쓰는 프로그램을 미리 메모리에 올리는 기능인데, 가상 디스크에서는 효과 없이 디스크 I/O만 늘리기 때문입니다.
+</details>
+
 ## 참고 자료
 - [Microsoft · Optimizing Windows for a VDI role](https://learn.microsoft.com/en-us/windows-server/remote/remote-desktop-services/rds-vdi-recommendations-2004)
 - [Microsoft · Optimize Windows configuration for VDI](https://learn.microsoft.com/windows-server/remote/remote-desktop-services/remote-desktop-services-vdi-optimize-configuration)

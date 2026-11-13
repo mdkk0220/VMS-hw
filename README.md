@@ -12,14 +12,16 @@
 | 1 | [OS(Rocky Linux 9.x & 8.10) 설치 및 외부 통신 테스트](./01-os-install-network-test/) | 완료 | VM 2대 구축, 통신 점검, 장애 5건 해결 | [DETAILS](./01-os-install-network-test/DETAILS.md) | - |
 | 2 | [네트워크 이중화(Bonding) 구성 테스트](./02-network-bonding/) | 완료 | 9.8 bond 2개 · 8.10 bond 1개, 장애 전환 손실 1~2개, 장애 6건 기록 | [DETAILS](./02-network-bonding/DETAILS.md) | [CONCEPTS](./02-network-bonding/CONCEPTS.md) |
 | 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 완료 | Keepalived VIP 전환, GTID 복제, Galera 3노드, 장애 4건 기록 | [DETAILS](./03-application-ha/DETAILS.md) | - |
-| 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | | [DETAILS](./04-windows11-optimization/DETAILS.md) | [CONCEPTS](./04-windows11-optimization/CONCEPTS.md) |
-| 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 예정 | | [DETAILS](./05-network-basics/DETAILS.md) | [CONCEPTS](./05-network-basics/CONCEPTS.md) |
+| 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 개념 정리 | 최적화 항목 10개와 이유, 끄면 안 되는 항목, 효과 측정 방법 | [DETAILS](./04-windows11-optimization/DETAILS.md) | [CONCEPTS](./04-windows11-optimization/CONCEPTS.md) |
+| 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 개념 정리 | 계층별 확인 명령, 장애 장면 4개 확인 순서, 과제 1~3 장애 연결 | [DETAILS](./05-network-basics/DETAILS.md) | [CONCEPTS](./05-network-basics/CONCEPTS.md) |
 | 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 완료 | backup.sh · remote_backup.sh, cron, 원격 체크섬 검증 | [DETAILS](./06-shell-script/DETAILS.md) | - |
 
 각 과제 폴더는 아래 문서로 구성된다.
 - `README.md`: 표로 정리한 **요약**. 폴더에 들어가면 먼저 보인다.
 - `DETAILS.md`: 명령어, 출력, 장애 분석까지 담은 **상세 기록**.
 - `CONCEPTS.md`: 실습 전에 정리한 **개념과 용어** (있는 과제만).
+
+과제 4 · 5는 시간 관계상 VM 실습 대신 **개념 정리**로 진행했습니다. 과제 5는 과제 1~3에서 실제로 겪은 장애를 계층별로 다시 묶었습니다.
 
 > 다음에 이어서 할 곳: [PROGRESS.md](./PROGRESS.md)
 

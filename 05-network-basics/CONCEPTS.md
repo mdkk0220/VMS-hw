@@ -71,6 +71,48 @@ node1의 8080으로 들어온 요청을 node2의 80으로 넘깁니다. 다른 �
 
 **VirtualBox에도 같은 기능이 있습니다:** NAT 어댑터의 "포트 포워딩"에서 "호스트 2222 → VM 22"로 정하면, NAT 뒤에 있는 VM에 PC에서 SSH로 들어갈 수 있습니다. 우리는 호스트 전용 네트워크를 따로 둬서 이 방법을 쓰지 않았습니다.
 
+## 장애 장면별 확인 순서
+
+문의가 오면 "어디까지는 되는가"를 먼저 정하고, 그 바로 위 계층부터 봅니다.
+
+**장면 1 · ping은 되는데 웹 페이지가 안 열림 (어제까지는 됨)**
+- ping(ICMP)이 가므로 L3까지는 정상입니다.
+- 순서: 포트까지 가는지(`Test-NetConnection 서버IP -Port 80`) → 서버에서 서비스와 포트(`systemctl status nginx`, `ss -tlnp | grep :80`) → 방화벽(`firewall-cmd --list-all`)
+- "어제까지 됐다" = 오늘 무언가 바뀜. 재부팅(`--permanent` 없이 넣은 설정이 사라짐), 업데이트, 방화벽 정책 변경, 인증서 만료를 먼저 묻습니다.
+
+**장면 2 · 같은 대역인데 ping이 안 됨**
+- 같은 동네라 라우터와는 상관없습니다. L1 · L2를 봅니다.
+- 링크(`ip -br link`) → 상대 MAC이 `FAILED`인지(`ip neigh`) → ARP 요청 · 응답(`tcpdump -eni any arp`) → 상대 방화벽의 ICMP 차단 여부
+- 과제 2의 `fail_over_mac=none` 장애가 이 경우였습니다.
+
+**장면 3 · 내부망은 되는데 인터넷(다른 대역)만 안 됨**
+- L3 경로를 봅니다. `default`가 두 개인지, `ip route get 8.8.8.8`이 어느 NIC로 나가는지.
+- 게이트웨이 → 바깥 IP → 도메인 순서로 ping. IP는 되는데 도메인만 안 되면 DNS(`/etc/resolv.conf`, `nslookup`)입니다.
+- 과제 2 7-A(기본 경로 중복)가 이 경우였습니다.
+
+**장면 4 · 포트포워딩을 걸었는데 밖에서 안 들어옴**
+1. 규칙이 들어갔는지: `firewall-cmd --list-forward-ports`
+2. 다른 서버로 넘기면 `ip_forward=1`과 마스커레이드가 켜져 있는지
+3. 안쪽 서버가 그 포트에서 듣고, 안쪽 방화벽도 열려 있는지
+4. 응답이 같은 길로 돌아오는지: `tcpdump -ni any port 80`을 양쪽에서
+
+## 명령어 모음 (Linux · Windows)
+
+| 확인할 것 | 계층 | Linux (Rocky) | Windows (PowerShell) |
+| --- | --- | --- | --- |
+| 링크 상태 | L1 | `ip -br link` | `Get-NetAdapter` |
+| 내 IP | L3 | `ip -br a` | `Get-NetIPAddress` / `ipconfig` |
+| 상대 MAC(ARP 표) | L2 | `ip neigh` | `arp -a` / `Get-NetNeighbor` |
+| 라우팅 표 | L3 | `ip route` | `route print` / `Get-NetRoute` |
+| 이 목적지는 어느 길로 | L3 | `ip route get 8.8.8.8` | `Find-NetRoute -RemoteIPAddress 8.8.8.8` |
+| 가는 길 추적 | L3 | `tracepath` / `traceroute` | `tracert` |
+| 듣고 있는 포트 | L4 | `ss -tlnp` | `Get-NetTCPConnection -State Listen` |
+| 상대 포트까지 가나 | L4 | `curl -v http://IP` / `nc -zv IP 80` | `Test-NetConnection IP -Port 80` |
+| 방화벽 규칙 | L4 | `firewall-cmd --list-all` | `Get-NetFirewallRule -Enabled True` |
+| DNS | L7 | `cat /etc/resolv.conf`, `nslookup` | `Resolve-DnsName` |
+| 패킷 직접 보기 | 전체 | `tcpdump -eni any` | Wireshark / `pktmon` |
+| IP 포워딩 | L3 | `sysctl net.ipv4.ip_forward` | - |
+
 ## 사수가 물어볼 만한 질문
 
 <details>
@@ -101,4 +143,16 @@ L2를 의심합니다. `ip neigh`로 상대 MAC을 받아 왔는지(`FAILED`인�
 <summary>Q5. NAT와 포트포워딩의 차이는?</summary>
 
 NAT(SNAT)는 안에서 밖으로 나갈 때 출발 주소를 바꾸는 것이고, 포트포워딩(DNAT)은 밖에서 안으로 들어올 때 목적지 주소와 포트를 안쪽 서버로 바꾸는 것입니다.
+</details>
+
+<details>
+<summary>Q6. TCP와 UDP는 언제 각각 쓰나요?</summary>
+
+누락되면 안 되는 웹 · SSH · DB는 TCP, 빠르고 짧은 질의응답인 DNS · DHCP는 UDP를 씁니다.
+</details>
+
+<details>
+<summary>Q7. gratuitous ARP는 언제 나가나요?</summary>
+
+VIP가 다른 서버로 넘어가거나 bond 활성 포트가 바뀔 때, 주변 장비의 ARP 표를 바로 고치려고 보냅니다.
 </details>
