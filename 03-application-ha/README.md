@@ -76,7 +76,7 @@ node1 · node2에 nginx와 Keepalived를 올려 **VIP 192.168.56.100**으로 웹
 | Galera · Multi-Master | 세 노드가 모두 쓰기를 받고, 변경은 노드들의 합의를 거쳐 확정 |
 | 쿼럼 · Primary | 과반(3대 중 2대)이 모여 있어야 쓰기 가능한 상태(Primary) |
 | bootstrap | 처음 한 대만 `galera_new_cluster`로 새 클러스터를 시작 |
-| SST · IST | 데이터 전체 복사(새 노드) / 빠진 변경만 받기(잠깐 빠졌던 노드) |
+| SST · IST | 데이터 전체 복사(새 노드) / 빠진 변경만 받기(잠깐 빠졌던 노드). node3 복귀 때 `Receiving IST: 3 writesets, seqnos 6-8`로 IST 확인 |
 | auto_increment 간격 | 노드끼리 번호가 겹치지 않게 간격을 둠. id가 건너뛰어도 유실이 아님 |
 
 ---
@@ -90,5 +90,4 @@ Keepalived로 VIP를 node1에 두고, nginx 상태를 2초마다 검사해 서�
 세 노드를 모두 끄면 클러스터가 사라진다. 다시 켤 때는 **마지막에 꺼진(가장 최신) 노드에서만** `galera_new_cluster`로 시작하고, 나머지는 `systemctl start mariadb`로 합류시킨다. 어느 노드가 최신인지는 `/var/lib/mysql/grastate.dat`의 `seqno`와 `safe_to_bootstrap: 1`로 판단한다.
 
 ## 8. 미실시 · 미확인
-- node3 복귀 시 IST로 받았는지 로그로는 확정하지 못함(데이터는 따라잡음 확인)
 - VM을 갑자기 끄는 장애 전환, 복제 수동 페일오버

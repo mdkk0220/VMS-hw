@@ -194,7 +194,7 @@ wsrep_cluster_status      | Primary
 | --- | --- |
 | node2에 `from-node2`, node3에 `from-node3` INSERT | 세 노드 모두에 반영 (3-2와 달리 충돌 없음) |
 | node3 `systemctl stop mariadb` → node1에 `while-node3-down` INSERT | 남은 두 대로 쓰기 성공 |
-| node3 `systemctl start mariadb` | 크기 3으로 복귀, 6줄 모두 보유 |
+| node3 `systemctl start mariadb` | 크기 3으로 복귀, 6줄 모두 보유. 로그 `Receiving IST: 3 writesets, seqnos 6-8`, `State transfer from 2.0 (node2) complete` → 빠진 3건만 받음(IST) |
 
 id는 1, 2, 3, 5, 6, 7로 4를 건너뛰었다. Galera가 노드별로 auto_increment 간격을 조정해 번호 충돌을 막기 때문이다.
 
@@ -249,6 +249,14 @@ id는 1, 2, 3, 5, 6, 7로 4를 건너뛰었다. Galera가 노드별로 auto_incr
 | 조치 | `dnf module enable mariadb:10.5`, `semanage port -m/-a -t mysqld_port_t` |
 | 확인 | 세 노드 `wsrep_cluster_size` 3, Synced |
 | 재발 방지 | 버전이 섞인 서버에 클러스터를 구성할 때는 패키지 버전과 SELinux 포트 정책을 먼저 비교한다 |
+
+### 전체 재시작 실습 (11/13, 과제 6 시작 전)
+세 대를 모두 끈 뒤 node1 · node3만 켜자 둘 다 `activating`에서 멈춤(서로 클러스터를 기다림).
+```
+node1 grastate.dat: seqno -1, safe_to_bootstrap: 0
+node3 grastate.dat: seqno -1, safe_to_bootstrap: 1   ← 마지막에 정상 종료한 노드
+```
+두 노드 `systemctl stop mariadb` → node3 `galera_new_cluster`(크기 1, Primary) → node1 `systemctl start mariadb`(크기 2, 6줄 그대로).
 
 ## 배운 점
 - Galera는 "어디에 써도 된다"가 장점이지만, 처음 시작과 전체 재시작은 한 노드에서 bootstrap해야 한다. 순서가 곧 안정성이다.

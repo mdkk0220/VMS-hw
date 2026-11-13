@@ -14,7 +14,7 @@
 | 3 | [Application(WEB · MariaDB) 이중화 · 다중화](./03-application-ha/) | 완료 | Keepalived VIP 전환, GTID 복제, Galera 3노드, 장애 4건 기록 | [DETAILS](./03-application-ha/DETAILS.md) | - |
 | 4 | [Windows 11 최적화 적용 및 테스트](./04-windows11-optimization/) | 예정 | | [DETAILS](./04-windows11-optimization/DETAILS.md) | [CONCEPTS](./04-windows11-optimization/CONCEPTS.md) |
 | 5 | [네트워크 기본 개념 (L2 · L3 · L4, 라우팅, 포워딩)](./05-network-basics/) | 예정 | | [DETAILS](./05-network-basics/DETAILS.md) | [CONCEPTS](./05-network-basics/CONCEPTS.md) |
-| 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 예정 | | [DETAILS](./06-shell-script/DETAILS.md) | - |
+| 6 | [쉘 스크립트 자동화 (백업 · 원격 업로드)](./06-shell-script/) | 완료 | backup.sh · remote_backup.sh, cron, 원격 체크섬 검증 | [DETAILS](./06-shell-script/DETAILS.md) | - |
 
 각 과제 폴더는 아래 문서로 구성된다.
 - `README.md`: 표로 정리한 **요약**. 폴더에 들어가면 먼저 보인다.
