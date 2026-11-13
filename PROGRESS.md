@@ -26,7 +26,6 @@
 ## 남은 순서
 1. (완료 11/13) 과제 4 · 5 CONCEPTS.md 검토, README에 "개념 위주 정리" 표시
 2. node2 다음에 켤 때: index.html 심볼릭 링크를 실제 파일로 교체(node1과 같은 방법)
-3. (선택) 과제 5 포트포워딩 실습
 
 ## 다시 켤 때 주의
 **현재 마지막 종료 노드는 node3** → 다음 기동은 node3에서 `galera_new_cluster`, 이어서 node1 · node2.
