@@ -20,6 +20,12 @@ log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_FILE"; }
 # shellcheck disable=SC2029  # 원격 경로 변수는 일부러 로컬에서 펼쳐 보낸다
 rssh() { ssh "${SSH_OPTS[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "$@"; }
 
+check_tools() {
+  for c in ssh rsync sha256sum; do
+    command -v "$c" >/dev/null 2>&1 || { log "ERROR: '$c' 명령이 없음 (dnf install로 설치 필요)"; exit 5; }
+  done
+}
+
 check_ssh() {
   if ! rssh true 2>/dev/null; then
     log "ERROR: ${REMOTE_HOST} SSH 접속 실패 (키/방화벽/서비스 확인)"; exit 1
@@ -53,7 +59,7 @@ do_push() {
 }
 
 case "${1:-}" in
-  pull) check_ssh; do_pull ;;
-  push) check_ssh; do_push ;;
+  pull) check_tools; check_ssh; do_pull ;;
+  push) check_tools; check_ssh; do_push ;;
   *) echo "사용법: $0 {pull|push}"; exit 9 ;;
 esac

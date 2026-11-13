@@ -21,6 +21,13 @@ log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_FILE"; }
 exec 9>/var/lock/backup.lock
 flock -n 9 || { log "ERROR: 이미 실행 중"; exit 1; }
 
+# 필요한 프로그램이 있는지 먼저 확인 (최소 설치 서버에는 tar가 없는 경우가 있음)
+NEED=(tar gzip sha256sum flock)
+[ "$DB_DUMP" = "1" ] && NEED+=(mariadb-dump)
+for c in "${NEED[@]}"; do
+  command -v "$c" >/dev/null 2>&1 || { log "ERROR: '$c' 명령이 없음 (dnf install로 설치 필요)"; exit 5; }
+done
+
 mkdir -p "$DEST_DIR"
 
 for d in "${SRC_DIRS[@]}"; do
