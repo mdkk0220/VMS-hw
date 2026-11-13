@@ -18,8 +18,8 @@
 |---|---|---|
 | OS / 커널 | Rocky Linux 9.8 / 5.14 | Rocky Linux 8.10 / 4.18 |
 | 사양 | 2 vCPU · 2 GB · 20 GB | 동일 |
-| 어댑터 1 (NAT) | enp0s3 · 10.0.2.15 (DHCP) | enp0s3 · 10.0.2.15 (DHCP) |
-| 어댑터 2 (호스트 전용) | enp0s8 · 192.168.56.11 (고정) | enp0s8 · 192.168.56.13 (고정) |
+| NIC 1 (NAT) | enp0s3 · 10.0.2.15 (DHCP) | enp0s3 · 10.0.2.15 (DHCP) |
+| NIC 2 (host-only) | enp0s8 · 192.168.56.11 (고정) | enp0s8 · 192.168.56.13 (고정) |
 | 설치 옵션 | Minimal Install · 자동 파티션(LVM) | Minimal Install · 자동 파티션 · KDUMP 끔 |
 
 두 VM의 NAT IP가 같아도 충돌하지 않는다. VirtualBox NAT는 VM마다 별도의 네트워크를 만들기 때문이다. 대신 NAT로는 VM끼리 통신할 수 없어서 호스트 전용 어댑터를 추가했다.
@@ -121,26 +121,28 @@ nmcli con up enp0s3
 
 ## 결과
 
-| 확인한 것 | 결과 | 근거 |
-|---|---|---|
-| Rocky 9.8 설치 | 성공 | `cat /etc/rocky-release` |
-| Rocky 8.10 설치 | 성공 | `cat /etc/rocky-release` |
-| 고정 IP · 재부팅 후 유지 | 성공 | `ip -br a`, `nmcli -g …` |
-| 외부 통신 (게이트웨이 · 인터넷 · DNS · HTTPS) | 성공 | ping · curl |
-| 패키지 저장소 접속 | 성공 | `dnf -y update` |
-| 호스트 PC → VM SSH | 성공 | PowerShell `ssh` |
-| VM ↔ VM 통신 | 성공 | node3 → node1 ping, node1 → node3 SSH |
-| DNS 장애 재현 · 복구 | 성공 | 위 7번 출력 |
+| 확인한 것 (모두 성공) | 근거 |
+|---|---|
+| Rocky 9.8 설치 | `cat /etc/rocky-release` |
+| Rocky 8.10 설치 | `cat /etc/rocky-release` |
+| 고정 IP · 재부팅 후 유지 | `ip -br a`, `nmcli -g …` |
+| 외부 통신 (게이트웨이 · 인터넷 · DNS · HTTPS) | ping · curl |
+| 패키지 저장소 접속 | `dnf -y update` |
+| 호스트 PC → VM SSH | PowerShell `ssh` |
+| VM ↔ VM 통신 | node3 → node1 ping, node1 → node3 SSH |
+| DNS 장애 재현 · 복구 | 위 7번 출력 |
 
 ## Rocky 8.10과 9.8 차이 (직접 확인)
 
 | 항목 | Rocky 8.10 | Rocky 9.8 |
 |---|---|---|
 | 커널 | 4.18 | 5.14 |
-| 네트워크 설정 파일 | `/etc/sysconfig/network-scripts/ifcfg-*` | `/etc/NetworkManager/system-connections/*.nmconnection` |
+| 네트워크 설정 파일 | `ifcfg-*` | `*.nmconnection` |
 | 설치 기본 Software | Server | Minimal |
-| 설치 직후 두 번째 NIC | autoconnect `no` | 정상 |
+| 두 번째 NIC | autoconnect `no` | 정상 |
 | nmcli 명령 | 동일하게 동작 | 동일하게 동작 |
+
+설정 파일 위치: 8.10은 `/etc/sysconfig/network-scripts/`, 9.8은 `/etc/NetworkManager/system-connections/`. 두 번째 NIC는 설치 직후 상태입니다.
 
 설정 파일 위치는 버전마다 다르므로 `nmcli -f NAME,DEVICE,FILENAME con show`로 확인했다.
 

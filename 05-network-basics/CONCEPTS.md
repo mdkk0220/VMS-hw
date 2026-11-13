@@ -4,11 +4,15 @@
 
 ## 한눈에 보기
 
-| 계층 | 보는 주소 | 대표 장비 · 기능 | 택배 비유 | 우리 실습에서 만난 곳 |
-| --- | --- | --- | --- | --- |
-| **L2** 데이터링크 | **MAC 주소** (`08:00:27:…`) | 스위치, 브리지, bond | 같은 동네 안에서 **집 앞 문패**를 보고 배달 | 과제 2 bond, `fail_over_mac`, ARP, gratuitous ARP |
-| **L3** 네트워크 | **IP 주소** (`192.168.56.11`) | 라우터, L3 스위치 | **다른 동네**로 보낼 때 주소(시·구)를 보고 경로 선택 | 과제 1 기본 경로, 과제 2 7-A 기본 경로 중복 |
-| **L4** 전송 | **포트 번호** (80, 3306) + TCP/UDP | L4 스위치, 로드밸런서, 방화벽 | 같은 건물 안 **몇 호실**(어느 서비스)로 갈지 | 과제 3 http(80), mysql(3306) 방화벽 허용 |
+| L | 보는 주소 | 장비 | 실습에서 만난 곳 |
+| --- | --- | --- | --- |
+| **L2** | **MAC** (`08:00:27:…`) | 스위치, bond | 과제 2 bond, `fail_over_mac`, ARP, gratuitous ARP |
+| **L3** | **IP** (`192.168.56.11`) | 라우터 | 과제 1 기본 경로, 과제 2 7-A 기본 경로 중복 |
+| **L4** | **포트** (80, 3306) | 방화벽 | 과제 3 http(80), mysql(3306) 방화벽 허용 |
+
+- **이름:** L2 데이터링크 · L3 네트워크 · L4 전송
+- **장비:** L2 스위치 · 브리지 · bond / 라우터 · L3 스위치 / L4 스위치 · 로드밸런서 · 방화벽
+- **택배 비유:** L2는 같은 동네 안에서 **집 앞 문패**를 보고 배달, L3는 **다른 동네**로 보낼 때 주소(시·구)를 보고 경로 선택, L4는 같은 건물 안 **몇 호실**(어느 서비스)로 갈지
 
 **계층이 올라갈수록 더 많은 정보를 보고 판단합니다.** L2 스위치는 MAC만 보고, 라우터는 IP까지 보고, L4 장비는 포트까지 봅니다.
 
@@ -98,20 +102,20 @@ node1의 8080으로 들어온 요청을 node2의 80으로 넘깁니다. 다른 �
 
 ## 명령어 모음 (Linux · Windows)
 
-| 확인할 것 | 계층 | Linux (Rocky) | Windows (PowerShell) |
-| --- | --- | --- | --- |
-| 링크 상태 | L1 | `ip -br link` | `Get-NetAdapter` |
-| 내 IP | L3 | `ip -br a` | `Get-NetIPAddress` / `ipconfig` |
-| 상대 MAC(ARP 표) | L2 | `ip neigh` | `arp -a` / `Get-NetNeighbor` |
-| 라우팅 표 | L3 | `ip route` | `route print` / `Get-NetRoute` |
-| 이 목적지는 어느 길로 | L3 | `ip route get 8.8.8.8` | `Find-NetRoute -RemoteIPAddress 8.8.8.8` |
-| 가는 길 추적 | L3 | `tracepath` / `traceroute` | `tracert` |
-| 듣고 있는 포트 | L4 | `ss -tlnp` | `Get-NetTCPConnection -State Listen` |
-| 상대 포트까지 가나 | L4 | `curl -v http://IP` / `nc -zv IP 80` | `Test-NetConnection IP -Port 80` |
-| 방화벽 규칙 | L4 | `firewall-cmd --list-all` | `Get-NetFirewallRule -Enabled True` |
-| DNS | L7 | `cat /etc/resolv.conf`, `nslookup` | `Resolve-DnsName` |
-| 패킷 직접 보기 | 전체 | `tcpdump -eni any` | Wireshark / `pktmon` |
-| IP 포워딩 | L3 | `sysctl net.ipv4.ip_forward` | - |
+| 확인할 것 | Linux (Rocky) | Windows (PowerShell) |
+| --- | --- | --- |
+| 링크 상태 | `ip -br link` | `Get-NetAdapter` |
+| 내 IP | `ip -br a` | `Get-NetIPAddress` / `ipconfig` |
+| 상대 MAC(ARP 표) | `ip neigh` | `arp -a` / `Get-NetNeighbor` |
+| 라우팅 표 | `ip route` | `route print` / `Get-NetRoute` |
+| 나가는 경로 | `ip route get 8.8.8.8` | `Find-NetRoute -RemoteIPAddress 8.8.8.8` |
+| 가는 길 추적 | `tracepath` / `traceroute` | `tracert` |
+| 듣고 있는 포트 | `ss -tlnp` | `Get-NetTCPConnection -State Listen` |
+| 상대 포트 도달 | `curl -v http://IP` / `nc -zv IP 80` | `Test-NetConnection IP -Port 80` |
+| 방화벽 규칙 | `firewall-cmd --list-all` | `Get-NetFirewallRule -Enabled True` |
+| DNS | `cat /etc/resolv.conf`, `nslookup` | `Resolve-DnsName` |
+| 패킷 직접 보기 | `tcpdump -eni any` | Wireshark / `pktmon` |
+| IP 포워딩 | `sysctl net.ipv4.ip_forward` | - |
 
 ## 사수가 물어볼 만한 질문
 

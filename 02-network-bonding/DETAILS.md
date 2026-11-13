@@ -128,53 +128,43 @@ node2에서 bond0, bond1 양쪽으로 동시에 ping을 걸고, node1 어댑터 
 ## 4. 트러블슈팅
 
 ### 장애 1 · 자동 생성 "Wired connection" 프로파일이 포트를 가로챔 (실제 발생)
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | 어댑터를 추가하자 NetworkManager가 `Wired connection 1` 같은 프로파일을 자동으로 만들어 새 NIC에 연결함. bond 포트 프로파일이 붙지 못함 |
-| 원인 | 설정 파일이 없는 NIC에는 NetworkManager가 기본 DHCP 프로파일을 만든다. 이 프로파일은 `/run`(메모리)에 있어 재부팅하면 다시 생긴다 |
-| 조치 | 자동 프로파일 삭제 후 bond 포트 프로파일 활성화. 삭제한 NIC는 `no-auto-default`에 기록되어 다시 생기지 않음 |
-| 확인 | `nmcli -f NAME,DEVICE con show` 에서 enp0s9 등이 bondN-pN에 연결됨 |
+- **증상:** 어댑터를 추가하자 NetworkManager가 `Wired connection 1` 같은 프로파일을 자동으로 만들어 새 NIC에 연결함. bond 포트 프로파일이 붙지 못함
+- **원인:** 설정 파일이 없는 NIC에는 NetworkManager가 기본 DHCP 프로파일을 만든다. 이 프로파일은 `/run`(메모리)에 있어 재부팅하면 다시 생긴다
+- **조치:** 자동 프로파일 삭제 후 bond 포트 프로파일 활성화. 삭제한 NIC는 `no-auto-default`에 기록되어 다시 생기지 않음
+- **확인:** `nmcli -f NAME,DEVICE con show` 에서 enp0s9 등이 bondN-pN에 연결됨
 
 ### 장애 2 · bond0 ping 실패, ARP FAILED (실제 발생)
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | bond0 UP, IP 정상인데 node1 ↔ node2 ping 100% 손실. `ip neigh`에 상대가 `FAILED` |
-| 확인 | `tcpdump -eni any icmp` 결과 node2로 오는 ICMP가 **대기 포트 enp0s10으로만** 들어옴 |
-| 원인 | 기본값 `fail_over_mac=none`이면 모든 포트가 첫 번째로 붙은 포트의 MAC을 같이 쓴다. node2는 enp0s10이 먼저 붙어 bond MAC이 enp0s10 것이 되었고, VirtualBox 내부 네트워크는 그 MAC의 원래 어댑터(대기 포트)로 프레임을 보냈다. active-backup은 대기 포트로 들어온 패킷을 버린다 |
-| 조치 | 양쪽 모두 `fail_over_mac=active` 추가 후 `nmcli con up bond0` |
-| 확인 | ping 정상, 장애 전환 테스트 통과 |
-| 재발 방지 | 가상화 환경(MAC 기반 전달)에서는 active-backup에 `fail_over_mac=active`를 기본으로 넣는다 |
+- **증상:** bond0 UP, IP 정상인데 node1 ↔ node2 ping 100% 손실. `ip neigh`에 상대가 `FAILED`
+- **확인:** `tcpdump -eni any icmp` 결과 node2로 오는 ICMP가 **대기 포트 enp0s10으로만** 들어옴
+- **원인:** 기본값 `fail_over_mac=none`이면 모든 포트가 첫 번째로 붙은 포트의 MAC을 같이 쓴다. node2는 enp0s10이 먼저 붙어 bond MAC이 enp0s10 것이 되었고, VirtualBox 내부 네트워크는 그 MAC의 원래 어댑터(대기 포트)로 프레임을 보냈다. active-backup은 대기 포트로 들어온 패킷을 버린다
+- **조치:** 양쪽 모두 `fail_over_mac=active` 추가 후 `nmcli con up bond0`
+- **확인:** ping 정상, 장애 전환 테스트 통과
+- **재발 방지:** 가상화 환경(MAC 기반 전달)에서는 active-backup에 `fail_over_mac=active`를 기본으로 넣는다
 
 ### 장애 3 · 설정 직후 상태 확인으로 생긴 오판 (실제 발생)
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | `nmcli con up` 직후 bond0가 `connecting`, 주소가 `fe80::`만 보임 |
-| 원인 | 설정이 틀린 것이 아니라 활성화가 끝나기 전에 확인했음 |
-| 조치 | 약 10초 기다린 뒤 다시 확인하니 정상 |
-| 재발 방지 | 변경 직후 바로 결론 내리지 말고, 몇 초 뒤 프로파일 값(`nmcli con show bond0`)과 실제 상태(`ip a`)를 따로 확인한다 |
+- **증상:** `nmcli con up` 직후 bond0가 `connecting`, 주소가 `fe80::`만 보임
+- **원인:** 설정이 틀린 것이 아니라 활성화가 끝나기 전에 확인했음
+- **조치:** 약 10초 기다린 뒤 다시 확인하니 정상
+- **재발 방지:** 변경 직후 바로 결론 내리지 말고, 몇 초 뒤 프로파일 값(`nmcli con show bond0`)과 실제 상태(`ip a`)를 따로 확인한다
 
 ### 7-A · 기본 경로 중복 (일부러 재현)
-| 항목 | 내용 |
-| --- | --- |
-| 재현 | `nmcli con mod bond1 ipv4.gateway 10.20.20.1 ipv4.route-metric 50; nmcli con up bond1` |
-| 증상 | `ip route`에 default가 2개. metric이 더 작은 bond1 경로가 우선되어 외부 통신이 존재하지 않는 10.20.20.1로 감 |
-| 확인 | `ip route get 8.8.8.8` → `via 10.20.20.1 dev bond1` |
-| 원인 | 내부 전용망에 게이트웨이를 넣어 기본 경로가 하나 더 생김 |
-| 조치 | `nmcli con mod bond1 ipv4.gateway "" ipv4.route-metric -1; nmcli con up bond1` |
-| 확인 | default가 NAT(enp0s3) 하나만 남고 외부 통신 정상 |
-| 재발 방지 | 기본 경로는 서버당 하나. 내부망 bond에는 게이트웨이를 넣지 않는다 |
+- **재현:** `nmcli con mod bond1 ipv4.gateway 10.20.20.1 ipv4.route-metric 50; nmcli con up bond1`
+- **증상:** `ip route`에 default가 2개. metric이 더 작은 bond1 경로가 우선되어 외부 통신이 존재하지 않는 10.20.20.1로 감
+- **확인:** `ip route get 8.8.8.8` → `via 10.20.20.1 dev bond1`
+- **원인:** 내부 전용망에 게이트웨이를 넣어 기본 경로가 하나 더 생김
+- **조치:** `nmcli con mod bond1 ipv4.gateway "" ipv4.route-metric -1; nmcli con up bond1`
+- **확인:** default가 NAT(enp0s3) 하나만 남고 외부 통신 정상
+- **재발 방지:** 기본 경로는 서버당 하나. 내부망 bond에는 게이트웨이를 넣지 않는다
 
 ### 7-B · 포트가 조용히 빠져 이중화가 사라짐 (일부러 재현)
-| 항목 | 내용 |
-| --- | --- |
-| 재현 | `nmcli con mod bond1-p2 connection.autoconnect no; nmcli con down bond1-p2` |
-| 증상 | 평소에는 ping, `ip a`, `nmcli con show` 모두 정상으로 보임. 남은 포트(어댑터 5)를 끊자 bond1 통신이 전부 끊김 |
-| 결과 | **67개 중 46개 손실**, `Destination Host Unreachable` (6-5에서 같은 동작 시 2개 손실) |
-| 확인 | `grep -c "Slave Interface" /proc/net/bonding/bond1` → **1** (정상 2). 장애 중 `Currently Active Slave: None`, `bond1 DOWN <NO-CARRIER>` |
-| 원인 | 포트 프로파일 하나가 내려가 있어도 bond는 남은 포트로 동작하므로 겉으로 드러나지 않음 |
-| 조치 | `nmcli con mod bond1-p2 connection.autoconnect yes; nmcli con up bond1-p2` |
-| 확인 | 포트 개수 2, 두 포트 모두 `MII Status: up`, AUTOCONNECT 모두 `yes` |
-| 재발 방지 | 정기 점검에 포트 개수와 `Link Failure Count`를 넣는다. ping 성공만으로 정상이라고 판단하지 않는다 |
+- **재현:** `nmcli con mod bond1-p2 connection.autoconnect no; nmcli con down bond1-p2`
+- **증상:** 평소에는 ping, `ip a`, `nmcli con show` 모두 정상으로 보임. 남은 포트(어댑터 5)를 끊자 bond1 통신이 전부 끊김
+- **결과:** **67개 중 46개 손실**, `Destination Host Unreachable` (6-5에서 같은 동작 시 2개 손실)
+- **확인:** `grep -c "Slave Interface" /proc/net/bonding/bond1` → **1** (정상 2). 장애 중 `Currently Active Slave: None`, `bond1 DOWN <NO-CARRIER>`
+- **원인:** 포트 프로파일 하나가 내려가 있어도 bond는 남은 포트로 동작하므로 겉으로 드러나지 않음
+- **조치:** `nmcli con mod bond1-p2 connection.autoconnect yes; nmcli con up bond1-p2`
+- **확인:** 포트 개수 2, 두 포트 모두 `MII Status: up`, AUTOCONNECT 모두 `yes`
+- **재발 방지:** 정기 점검에 포트 개수와 `Link Failure Count`를 넣는다. ping 성공만으로 정상이라고 판단하지 않는다
 
 장애 중 node1 상태
 ```
@@ -185,24 +175,24 @@ bond1            DOWN           08:00:27:1e:14:4e <NO-CARRIER,BROADCAST,MULTICAS
 ```
 
 ### bond 정기 점검 항목
-| 항목 | 명령 | 정상 값 |
+모두 `grep <찾을 문구> /proc/net/bonding/bondN`으로 확인합니다. 포트 개수만 `grep -c`입니다.
+
+| 항목 | 찾을 문구 | 정상 값 |
 | --- | --- | --- |
-| 모드 | `grep "Bonding Mode" /proc/net/bonding/bondN` | `active-backup (fail_over_mac active)` |
-| 포트 개수 | `grep -c "Slave Interface" /proc/net/bonding/bondN` | 2 |
-| 포트 링크 | `grep "MII Status" /proc/net/bonding/bondN` | 모두 `up` |
-| 감시 간격 | `grep "MII Polling" /proc/net/bonding/bondN` | 0이 아님 (100) |
-| 장애 이력 | `grep "Link Failure Count" /proc/net/bonding/bondN` | 지난 점검보다 늘었으면 원인 확인 |
+| 모드 | `"Bonding Mode"` | `active-backup (fail_over_mac active)` |
+| 포트 개수 | `"Slave Interface"` | 2 |
+| 포트 링크 | `"MII Status"` | 모두 `up` |
+| 감시 간격 | `"MII Polling"` | 0이 아님 (100) |
+| 장애 이력 | `"Link Failure Count"` | 지난 점검보다 늘었으면 원인 확인 |
 
 ### 7-C · 링크 감시가 꺼져 페일오버가 일어나지 않음 (일부러 재현)
-| 항목 | 내용 |
-| --- | --- |
-| 재현 | `nmcli con mod bond0 bond.options "mode=active-backup,miimon=0,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0` 후 PC에서 `setlinkstate3 off` |
-| 증상 | 대기 포트 enp0s10이 살아 있는데도 넘어가지 않음. **50개 중 26개 손실**, 링크를 다시 연결할 때까지 계속 (같은 동작을 miimon=100에서 했을 때는 1개 손실) |
-| 확인 | `MII Polling Interval (ms): 0`. 커널 `carrier`는 `0`인데 bond의 enp0s9 `MII Status`는 `up`, 활성 포트도 enp0s9 그대로. dmesg에 경고 없음 |
-| 원인 | 링크 감시가 꺼져 bond가 포트 상태를 다시 확인하지 않음 |
-| 조치 | `nmcli con mod bond0 bond.options "mode=active-backup,miimon=100,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0` |
-| 확인 | miimon 100, carrier 1, 포트 2개, bond0 · bond1 ping 0% loss |
-| 재발 방지 | 정기 점검에 감시 간격 추가. 장애가 의심되면 bond 상태와 `/sys/class/net/<포트>/carrier`를 비교 |
+- **재현:** `nmcli con mod bond0 bond.options "mode=active-backup,miimon=0,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0` 후 PC에서 `setlinkstate3 off`
+- **증상:** 대기 포트 enp0s10이 살아 있는데도 넘어가지 않음. **50개 중 26개 손실**, 링크를 다시 연결할 때까지 계속 (같은 동작을 miimon=100에서 했을 때는 1개 손실)
+- **확인:** `MII Polling Interval (ms): 0`. 커널 `carrier`는 `0`인데 bond의 enp0s9 `MII Status`는 `up`, 활성 포트도 enp0s9 그대로. dmesg에 경고 없음
+- **원인:** 링크 감시가 꺼져 bond가 포트 상태를 다시 확인하지 않음
+- **조치:** `nmcli con mod bond0 bond.options "mode=active-backup,miimon=100,primary=enp0s9,fail_over_mac=active"; nmcli con up bond0`
+- **확인:** miimon 100, carrier 1, 포트 2개, bond0 · bond1 ping 0% loss
+- **재발 방지:** 정기 점검에 감시 간격 추가. 장애가 의심되면 bond 상태와 `/sys/class/net/<포트>/carrier`를 비교
 
 끊긴 순간 node1 상태
 ```
@@ -220,7 +210,7 @@ MII Status: up
 | --- | --- | --- |
 | node1 | 부팅 10분 뒤 | bond0 · bond1 모두 primary 활성, 포트 2개, miimon 100 |
 | node2 | 부팅 17분 뒤 | bond0 · bond1 포트 2개씩 |
-| node3 | `reboot` 직후 | bond0 활성 enp0s9, 포트 2개, 10.10.10.13, `Wired connection` 다시 생기지 않음 |
+| node3 | 재부팅 후 | bond0 활성 enp0s9, 포트 2개, 10.10.10.13, `Wired connection` 다시 생기지 않음 |
 
 ---
 
@@ -266,10 +256,12 @@ PREFIX=24
 | --- | --- | --- |
 | 커널 | 5.14 | 4.18 |
 | 명령 | 같음 | 같음 |
-| 저장 파일 | `/etc/NetworkManager/system-connections/bond0.nmconnection` | `/etc/sysconfig/network-scripts/ifcfg-bond0` |
+| 저장 파일 | `bond0.nmconnection` | `ifcfg-bond0` |
 | bond 옵션 | `[bond]` 섹션에 한 줄씩 | `BONDING_OPTS="…"` 한 줄, 공백 구분 |
-| 부팅 시 자동 연결 | `autoconnect` | `ONBOOT=yes` |
-| 활성화 메시지 | `controller waiting for ports` | `master waiting for slaves` (NetworkManager 버전 차이, 뜻은 같음) |
+| 자동 연결 | `autoconnect` | `ONBOOT=yes` |
+| 메시지 | `controller waiting for ports` | `master waiting for slaves` |
+
+저장 위치: 9.8은 `/etc/NetworkManager/system-connections/`, 8.10은 `/etc/sysconfig/network-scripts/`. 활성화 메시지는 NetworkManager 버전에 따라 단어만 다르고 뜻은 같습니다.
 
 ### 통신과 장애 전환
 - node1 → node3, node2 → node3 ping 0% loss

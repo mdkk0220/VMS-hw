@@ -47,18 +47,16 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 
 ## 4. 검증 결과
 
-| 확인 | 결과 |
-| --- | --- |
-| 로컬 백업 | 파일 4.6MB, DB 덤프 453KB |
-| 체크섬 | 두 파일 OK |
-| 압축 안 내용 | `etc/keepalived/keepalived.conf`, `usr/share/nginx/html/index.html` 포함 |
-| DB 덤프 안 내용 | `cafe.sales` INSERT 포함 |
-| 업로드 | node3에서 다시 계산한 체크섬이 원본과 일치 |
-| 가져오기 | node3 `/etc/my.cnf.d/`(galera.cnf 등 8개)를 `/backup/remote/192.168.56.13/20261113/`로 |
-| 실패 재현 | 없는 주소로 업로드 → `ERROR: … SSH 접속 실패`, exit 1 |
-| cron | 시험용 매분 일정으로 자동 실행 2회 확인 후 정식 일정으로 변경 |
-| **복구 R1 (파일)** | index.html 삭제(403) → **node3의 백업**에서 그 파일만 꺼내 복원 → WEB1 응답 |
-| **복구 R2 (DB)** | 덤프에서 cafe DB만 `cafe_restore`로 복원 → 지금 없는 id만 되돌림 → node1 · node3 모두 6줄 (삭제 직후 화면은 미확인) |
+- **로컬 백업:** 파일 4.6MB, DB 덤프 453KB
+- **체크섬:** 두 파일 OK
+- **압축 안 내용:** `etc/keepalived/keepalived.conf`, `usr/share/nginx/html/index.html` 포함
+- **DB 덤프 안 내용:** `cafe.sales` INSERT 포함
+- **업로드:** node3에서 다시 계산한 체크섬이 원본과 일치
+- **가져오기:** node3 `/etc/my.cnf.d/`(galera.cnf 등 8개)를 `/backup/remote/192.168.56.13/20261113/`로
+- **실패 재현:** 없는 주소로 업로드 → `ERROR: … SSH 접속 실패`, exit 1
+- **cron:** 시험용 매분 일정으로 자동 실행 2회 확인 후 정식 일정으로 변경
+- **복구 R1 (파일):** index.html 삭제(403) → **node3의 백업**에서 그 파일만 꺼내 복원 → WEB1 응답
+- **복구 R2 (DB):** 덤프에서 cafe DB만 `cafe_restore`로 복원 → 지금 없는 id만 되돌림 → node1 · node3 모두 6줄 (삭제 직후 화면은 미확인)
 
 ---
 
@@ -71,8 +69,8 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 | 3 | 고친 스크립트를 내려받았는데 옛 버전 | GitHub raw 주소의 캐시 | 커밋 번호가 들어간 주소로 내려받아 버전 고정 |
 | 4 | (예방) pull 대상 `/etc/`를 backup 계정이 다 읽지 못함 | `/etc/shadow` 등은 root만 읽기 가능 | pull 대상을 `/etc/my.cnf.d/`로 변경 |
 | 5 | **복구 테스트에서 발견:** 백업 속 index.html에 내용이 없음 | Rocky nginx의 `index.html`은 `../../testpage/index.html`로 가는 **심볼릭 링크**. 우리 페이지 내용은 패키지(`rocky-logos-httpd`) 소유 파일에 있었고, tar는 링크만 담음 | 링크를 실제 파일로 교체(`\cp --remove-destination`), 새 백업에서 `tar -xzOf`로 내용 확인 |
-| 6 | 링크를 되살렸는데도 403 | `cp -a`가 `/tmp`의 SELinux 이름표(`user_tmp_t`)까지 복사 | `restorecon` → `httpd_sys_content_t` |
-| 7 | 교체 명령이 실행되지 않음 | root의 `cp`는 `cp -i` 별칭이라 덮어쓰기를 물었고, 붙여 넣은 다음 줄이 그 대답으로 들어감 | `\cp`로 별칭 무시, 한 줄씩 실행 |
+| 6 | 복원 후에도 403 | `cp -a`가 `/tmp`의 SELinux 이름표(`user_tmp_t`)까지 복사 | `restorecon` → `httpd_sys_content_t` |
+| 7 | 교체 실패 | root의 `cp`는 `cp -i` 별칭이라 덮어쓰기를 물었고, 붙여 넣은 다음 줄이 그 대답으로 들어감 | `\cp`로 별칭 무시, 한 줄씩 실행 |
 
 시작 전 준비로, 세 대를 모두 껐던 Galera를 `safe_to_bootstrap: 1`인 node3에서 `galera_new_cluster`로 다시 살렸습니다(과제 3 기록 참고).
 

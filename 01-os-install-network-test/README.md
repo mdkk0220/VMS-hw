@@ -33,12 +33,12 @@ VirtualBox에 **Rocky 9.8(node1)과 8.10(node3)**을 설치했습니다. 인터�
 
 ## 3. 수행한 작업 (순서대로)
 
-| 순서 | 작업 | 확인 방법 | 결과 |
+| # | 작업 | 확인 방법 | 결과 |
 | --- | --- | --- | --- |
 | 1 | ISO 무결성 확인 | `Get-FileHash`와 공식 CHECKSUM 비교 | 두 ISO 모두 일치 |
 | 2 | Minimal Install로 설치 | `cat /etc/rocky-release` | 9.8 / 8.10 |
 | 3 | 호스트 전용 NIC 고정 IP | `nmcli con mod … ipv4.method manual` | .11 / .13 |
-| 4 | 재부팅 후 유지 확인 | `reboot` → `ip -br a` | IP 유지, autoconnect yes |
+| 4 | 재부팅 후 확인 | `reboot` → `ip -br a` | IP 유지, autoconnect yes |
 | 5 | 통신 사다리 확인 | 아래 표 | 전부 성공 |
 | 6 | 업데이트 | `dnf -y update` | 완료, 새 커널 설치 |
 | 7 | SSH 접속 | 내 PC → node1, node1 → node3 | 성공 |
@@ -61,10 +61,12 @@ VirtualBox에 **Rocky 9.8(node1)과 8.10(node3)**을 설치했습니다. 인터�
 | 항목 | Rocky 8.10 | Rocky 9.8 |
 | --- | --- | --- |
 | 커널 | 4.18 | 5.14 |
-| 네트워크 설정 파일 | `/etc/sysconfig/network-scripts/ifcfg-*` | `/etc/NetworkManager/system-connections/*.nmconnection` |
-| 설치 화면 기본 소프트웨어 | Server | Minimal |
-| 설치 직후 두 번째 NIC | autoconnect `no` (부팅 후 꺼져 있음) | 정상 |
+| 네트워크 설정 파일 | `ifcfg-*` | `*.nmconnection` |
+| 기본 설치 유형 | Server | Minimal |
+| 두 번째 NIC | autoconnect `no` (부팅 후 꺼져 있음) | 정상 |
 | nmcli 명령 | 두 버전 모두 동일하게 동작 | 두 버전 모두 동일하게 동작 |
+
+설정 파일 위치: 8.10은 `/etc/sysconfig/network-scripts/`, 9.8은 `/etc/NetworkManager/system-connections/`. 두 번째 NIC는 설치 직후 상태입니다.
 
 ---
 

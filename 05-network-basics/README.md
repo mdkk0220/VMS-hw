@@ -19,24 +19,24 @@
 
 ## 2. 한눈에 보기
 
-| 계층 | 보는 것 | 실습에서 만난 장면 | 먼저 볼 명령 |
-| --- | --- | --- | --- |
-| L2 | MAC 주소 | 과제 2 `fail_over_mac=none`: IP는 맞는데 통신 불가, `ip neigh`에 `FAILED` | `ip neigh`, `tcpdump -eni any arp` |
-| L3 | IP · 경로 | 과제 2 7-A: 기본 경로가 두 개가 되어 인터넷 끊김 | `ip route`, `ip route get 8.8.8.8` |
-| L4 | 포트 · 방화벽 | 과제 3: http(80) · mysql(3306) 허용, VRRP는 IP 프로토콜 112라 rich rule | `ss -tlnp`, `firewall-cmd --list-all` |
-| 포워딩 | 주소 바꾸기 | VirtualBox NAT(SNAT), 포트포워딩(DNAT) | `firewall-cmd --list-forward-ports` |
+| 계층 | 실습에서 만난 장면 (L2 MAC · L3 IP · L4 포트) | 먼저 볼 명령 |
+| --- | --- | --- |
+| L2 | 과제 2 `fail_over_mac=none`: IP는 맞는데 통신 불가, `ip neigh`에 `FAILED` | `ip neigh`, `tcpdump -eni any arp` |
+| L3 | 과제 2 7-A: 기본 경로가 두 개가 되어 인터넷 끊김 | `ip route`, `ip route get 8.8.8.8` |
+| L4 | 과제 3: http(80) · mysql(3306) 허용, VRRP는 IP 프로토콜 112라 rich rule | `ss -tlnp`, `firewall-cmd --list-all` |
+| NAT | VirtualBox NAT(SNAT), 포트포워딩(DNAT) | `firewall-cmd --list-forward-ports` |
 
 **경로 선택:** 가장 구체적인 경로(longest prefix) → 같으면 metric이 작은 쪽. 기본 경로는 하나만 둡니다.
 **NAT와 포트포워딩:** NAT는 나갈 때 **출발지**를, 포트포워딩은 들어올 때 **목적지**를 바꿉니다.
 
 ## 3. 장애 장면별 확인 순서
 
-| 장면 | 정상인 계층 | 다음에 볼 것 |
-| --- | --- | --- |
-| ping은 되는데 웹이 안 열림 | L3까지 | 포트 도달(`Test-NetConnection -Port 80`) → 서비스 · 포트(`ss -tlnp`) → 방화벽 |
-| 같은 대역인데 ping 안 됨 | 없음 | 링크(`ip -br link`) → ARP(`ip neigh`) → 상대 방화벽의 ICMP 차단 |
-| 내부망은 되는데 인터넷만 안 됨 | 같은 대역 L3 | 기본 경로 중복(`ip route`) → 게이트웨이 → 바깥 IP → 도메인(DNS) |
-| 포트포워딩이 안 들어옴 | 앞단 L3 | 규칙 → `ip_forward` · 마스커레이드 → 안쪽 서버 포트 · 방화벽 → 응답 경로(`tcpdump`) |
+| 장면 (정상인 범위) | 다음에 볼 것 |
+| --- | --- |
+| ping은 되는데 웹이 안 열림 (L3까지) | 포트 도달(`Test-NetConnection -Port 80`) → 서비스 · 포트(`ss -tlnp`) → 방화벽 |
+| 같은 대역인데 ping 안 됨 | 링크(`ip -br link`) → ARP(`ip neigh`) → 상대 방화벽의 ICMP 차단 |
+| 내부망은 되는데 인터넷만 안 됨 (같은 대역 L3) | 기본 경로 중복(`ip route`) → 게이트웨이 → 바깥 IP → 도메인(DNS) |
+| 포트포워딩이 안 들어옴 (앞단 L3) | 규칙 → `ip_forward` · 마스커레이드 → 안쪽 서버 포트 · 방화벽 → 응답 경로(`tcpdump`) |
 
 "어제까지 됐다"는 말은 오늘 무언가 바뀌었다는 단서입니다. 재부팅(`--permanent` 없이 넣은 설정이 사라짐), 업데이트, 정책 변경을 먼저 묻습니다. 명령어 전체 모음은 [CONCEPTS.md](./CONCEPTS.md#명령어-모음-linux--windows)에 있습니다.
 

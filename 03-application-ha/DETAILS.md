@@ -206,49 +206,43 @@ id는 1, 2, 3, 5, 6, 7로 4를 건너뛰었다. Galera가 노드별로 auto_incr
 | 복제본에 쓰면 | 충돌로 복제 정지 | 정상 반영 |
 | 노드 장애 | 원본이 죽으면 수동 전환 필요 | 과반이 남으면 계속 쓰기 |
 | 최소 대수 | 2대 | 3대 (쿼럼 때문) |
-| 주의 | 지연(Seconds_Behind_Master) 감시 | 전체 재시작 시 bootstrap 순서, 대량 쓰기 시 전체가 느려질 수 있음 |
+| 주의 | 복제 지연 감시 | 재시작 순서, 쓰기 지연 |
+
+주의 자세히: Replication은 복제 지연(`Seconds_Behind_Master`)을 감시합니다. Galera는 전체 재시작 때 bootstrap 순서를 지켜야 하고, 대량 쓰기 때 클러스터 전체가 느려질 수 있습니다.
 
 ## 트러블슈팅
 
 ### 장애 1 · Keepalived 검사 스크립트가 SELinux에 막혀 조용히 꺼짐
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | VIP는 정상인데 로그에 `Unable to access script /usr/bin/systemctl - disabling`, `Disabling track script chk_nginx` |
-| 확인 | `ausearch -m avc -ts recent \| grep -c keepalived` → 2 |
-| 원인 | Keepalived(`keepalived_t`)가 SELinux 정책상 `systemctl`을 직접 실행할 수 없음 |
-| 조치 | 검사를 `/usr/libexec/keepalived/check_nginx.sh`로 옮기고 `restorecon` → 라벨 `keepalived_unconfined_script_exec_t` |
-| 확인 | `VRRP_Script(chk_nginx) succeeded`, nginx 중지 시 VIP 전환 |
-| 재발 방지 | Keepalived 설정 후 로그에서 `VRRP_Script … succeeded`를 꼭 확인. SELinux를 끄지 않고 허용된 경로를 쓴다 |
+- **증상:** VIP는 정상인데 로그에 `Unable to access script /usr/bin/systemctl - disabling`, `Disabling track script chk_nginx`
+- **확인:** `ausearch -m avc -ts recent \| grep -c keepalived` → 2
+- **원인:** Keepalived(`keepalived_t`)가 SELinux 정책상 `systemctl`을 직접 실행할 수 없음
+- **조치:** 검사를 `/usr/libexec/keepalived/check_nginx.sh`로 옮기고 `restorecon` → 라벨 `keepalived_unconfined_script_exec_t`
+- **확인:** `VRRP_Script(chk_nginx) succeeded`, nginx 중지 시 VIP 전환
+- **재발 방지:** Keepalived 설정 후 로그에서 `VRRP_Script … succeeded`를 꼭 확인. SELinux를 끄지 않고 허용된 경로를 쓴다
 
 ### 장애 2 · live 스냅샷 멈춤 → VM 설정 파일 손상
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | 켜진 node1을 `--live`로 스냅샷 → 90%에서 1시간 멈춤. VM은 꺼졌는데 상태는 `onlinesnapshotting` |
-| 조치 1 | node2 정상 종료 후 `VBoxHeadless.exe`, `VirtualBox.exe`, `VBoxSVC.exe` 강제 종료 |
-| 결과 | node1이 `<inaccessible>`로 바뀜 |
-| 원인 | `…{b81598e6…}.vdi cannot be directly attached … because it has 1 differencing child hard disks`. 미완성 스냅샷이 만든 빈 디스크 조각(`{9ec85e7a…}`, 2MB)이 설정 파일에 자식으로 남음 |
-| 조치 2 | `node1.vbox` 백업 → VBoxSVC 종료 상태에서 그 등록 한 줄 삭제 |
-| 확인 | node1 정상 등록, 부팅 후 nginx · keepalived · VIP 모두 그대로 (작업 손실 없음) |
-| 재발 방지 | 스냅샷은 VM을 끄고 찍는다. 설정 파일을 고치기 전에는 반드시 백업 |
+- **증상:** 켜진 node1을 `--live`로 스냅샷 → 90%에서 1시간 멈춤. VM은 꺼졌는데 상태는 `onlinesnapshotting`
+- **조치 1:** node2 정상 종료 후 `VBoxHeadless.exe`, `VirtualBox.exe`, `VBoxSVC.exe` 강제 종료
+- **결과:** node1이 `<inaccessible>`로 바뀜
+- **원인:** `…{b81598e6…}.vdi cannot be directly attached … because it has 1 differencing child hard disks`. 미완성 스냅샷이 만든 빈 디스크 조각(`{9ec85e7a…}`, 2MB)이 설정 파일에 자식으로 남음
+- **조치 2:** `node1.vbox` 백업 → VBoxSVC 종료 상태에서 그 등록 한 줄 삭제
+- **확인:** node1 정상 등록, 부팅 후 nginx · keepalived · VIP 모두 그대로 (작업 손실 없음)
+- **재발 방지:** 스냅샷은 VM을 끄고 찍는다. 설정 파일을 고치기 전에는 반드시 백업
 
 ### 장애 3 · 복제본에 직접 써서 복제 정지 (일부러 재현)
-| 항목 | 내용 |
-| --- | --- |
-| 재현 | node2에서 root로 `INSERT … VALUES (3, 'node2-direct', 9999)` → node1에서 `INSERT … ('mocha', 3200)` (id 3) |
-| 증상 | `Slave_IO_Running: Yes`, `Slave_SQL_Running: No`, `Last_SQL_Errno: 1062`, `Duplicate entry '3' for key 'PRIMARY'` |
-| 원인 | 복제본에 직접 쓴 줄과 원본의 새 줄이 같은 키. `read_only`는 관리자 권한 계정을 막지 못함 |
-| 조치 | 원본 기준: node2에서 `DELETE … WHERE id=3 AND item='node2-direct'` → `START SLAVE` |
-| 확인 | Yes / Yes, 오류 0, GTID 0-1-6 일치, 세 줄 데이터 일치 |
-| 재발 방지 | 복제본에 애플리케이션 계정만 두고 관리자 권한을 주지 않는다. 모니터링은 IO와 SQL 두 줄을 모두 본다. 충돌 이벤트 건너뛰기(skip)는 데이터 불일치를 남기므로 마지막 수단 |
+- **재현:** node2에서 root로 `INSERT … VALUES (3, 'node2-direct', 9999)` → node1에서 `INSERT … ('mocha', 3200)` (id 3)
+- **증상:** `Slave_IO_Running: Yes`, `Slave_SQL_Running: No`, `Last_SQL_Errno: 1062`, `Duplicate entry '3' for key 'PRIMARY'`
+- **원인:** 복제본에 직접 쓴 줄과 원본의 새 줄이 같은 키. `read_only`는 관리자 권한 계정을 막지 못함
+- **조치:** 원본 기준: node2에서 `DELETE … WHERE id=3 AND item='node2-direct'` → `START SLAVE`
+- **확인:** Yes / Yes, 오류 0, GTID 0-1-6 일치, 세 줄 데이터 일치
+- **재발 방지:** 복제본에 애플리케이션 계정만 두고 관리자 권한을 주지 않는다. 모니터링은 IO와 SQL 두 줄을 모두 본다. 충돌 이벤트 건너뛰기(skip)는 데이터 불일치를 남기므로 마지막 수단
 
 ### 장애 4 · 8.10 노드가 Galera에 합류할 수 없는 상태
-| 항목 | 내용 |
-| --- | --- |
-| 증상 | node3의 `semanage port -l`에 Galera 포트가 `mysqld_port_t`로 없음. 기본 MariaDB는 10.3 |
-| 원인 | 8.10 SELinux 정책과 모듈 기본값이 9.8과 다름 |
-| 조치 | `dnf module enable mariadb:10.5`, `semanage port -m/-a -t mysqld_port_t` |
-| 확인 | 세 노드 `wsrep_cluster_size` 3, Synced |
-| 재발 방지 | 버전이 섞인 서버에 클러스터를 구성할 때는 패키지 버전과 SELinux 포트 정책을 먼저 비교한다 |
+- **증상:** node3의 `semanage port -l`에 Galera 포트가 `mysqld_port_t`로 없음. 기본 MariaDB는 10.3
+- **원인:** 8.10 SELinux 정책과 모듈 기본값이 9.8과 다름
+- **조치:** `dnf module enable mariadb:10.5`, `semanage port -m/-a -t mysqld_port_t`
+- **확인:** 세 노드 `wsrep_cluster_size` 3, Synced
+- **재발 방지:** 버전이 섞인 서버에 클러스터를 구성할 때는 패키지 버전과 SELinux 포트 정책을 먼저 비교한다
 
 ### 전체 재시작 실습 (11/13, 과제 6 시작 전)
 세 대를 모두 끈 뒤 node1 · node3만 켜자 둘 다 `activating`에서 멈춤(서로 클러스터를 기다림).

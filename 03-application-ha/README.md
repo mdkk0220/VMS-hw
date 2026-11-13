@@ -33,7 +33,7 @@ node1 · node2에 nginx와 Keepalived를 올려 **VIP 192.168.56.100**으로 웹
 
 ## 3. 수행한 작업 (순서대로)
 
-| 순서 | 작업 | 확인 |
+| # | 작업 | 확인 |
 | --- | --- | --- |
 | 1 | 두 서버에 nginx · keepalived 설치, 방화벽 http · VRRP 허용 | 내 PC에서 각 서버 페이지 응답 |
 | 2 | Keepalived 설정: VIP, priority, nginx 검사(track_script, 실패 시 -30) | node1에만 VIP |
