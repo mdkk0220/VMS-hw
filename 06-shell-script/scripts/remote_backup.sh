@@ -9,7 +9,7 @@ REMOTE_HOST="${REMOTE_HOST:-192.168.56.13}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 SSH_OPTS=(-i "$SSH_KEY" -o BatchMode=yes -o ConnectTimeout=5)
 
-PULL_SRC="${PULL_SRC:-/etc/}"                 # 원격에서 가져올 경로
+PULL_SRC="${PULL_SRC:-/etc/my.cnf.d/}"        # 원격에서 가져올 경로 (node3의 Galera 설정)
 PULL_DEST="/backup/remote/${REMOTE_HOST}"     # 로컬 저장 위치
 PUSH_SRC="${PUSH_SRC:-/backup/local/}"        # 로컬에서 올릴 경로
 PUSH_DEST="/backup/from_$(hostname -s)/"      # 원격 저장 위치
