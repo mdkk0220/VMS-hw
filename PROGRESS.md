@@ -25,7 +25,8 @@
 
 ## 남은 순서
 1. 과제 4 · 5 CONCEPTS.md 검토, README에 "개념 위주 정리" 표시
-2. (선택) 과제 6 복구 테스트, 과제 5 포트포워딩 실습
+2. node2 다음에 켤 때: index.html 심볼릭 링크를 실제 파일로 교체(node1과 같은 방법)
+3. (선택) 과제 5 포트포워딩 실습
 
 ## 다시 켤 때 주의
 세 VM을 모두 끄면 Galera 클러스터가 내려간다. `/var/lib/mysql/grastate.dat`에서 `safe_to_bootstrap: 1`(또는 seqno가 가장 큰) 노드에서 `galera_new_cluster`, 나머지는 `systemctl start mariadb`.
