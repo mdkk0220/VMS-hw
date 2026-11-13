@@ -98,4 +98,4 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 
 ## 8. 미실시 · 남은 일
 - 정식 일정(02:30)의 실제 실행 확인
-- node2의 index.html도 같은 심볼릭 링크 구조라, 다음에 켤 때 실제 파일로 교체 필요
+- (완료 11/13) node2의 index.html도 같은 심볼릭 링크라 실제 파일로 교체함. 세 서버 모두 페이지 내용이 백업 범위 안에 있음

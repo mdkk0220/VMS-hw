@@ -16,16 +16,18 @@
 ## 서버 상태
 
 - **node1 (.11)** · 스냅샷 `과제6-복구테스트완료` · Rocky 9.8, nginx + Keepalived MASTER(VIP .100), Galera 노드, 백업 스크립트 · cron
-- **node2 (.12)** · 스냅샷 `과제3완료` · Rocky 9.8, nginx + Keepalived BACKUP, Galera 노드
+- **node2 (.12)** · 스냅샷 `과제6-복구테스트완료` · Rocky 9.8, nginx + Keepalived BACKUP, Galera 노드
 - **node3 (.13)** · 스냅샷 `과제6-복구테스트완료` · Rocky 8.10, bond0, Galera 노드(MariaDB 10.5), 백업 서버(backup 계정)
 
 스냅샷은 반드시 VM을 끄고 찍는다(live 스냅샷 멈춤 장애 이후).
 
 ## 남은 순서
 1. (완료 11/13) 과제 4 · 5 CONCEPTS.md 검토, README에 "개념 위주 정리" 표시
-2. node2 다음에 켤 때: index.html 심볼릭 링크를 실제 파일로 교체(node1과 같은 방법)
+2. (완료 11/13) node2 index.html 심볼릭 링크를 실제 파일로 교체, Galera 재합류(size 3, Synced)
 
 ## 다시 켤 때 주의
-**현재 마지막 종료 노드는 node3** → 다음 기동은 node3에서 `galera_new_cluster`, 이어서 node1 · node2.
+**11/13 종료 순서:** node1 → node2 → node3 (node3 종료 화면은 미확인). 다음에 켤 때는 node3부터 켜고 `grastate.dat`의 `safe_to_bootstrap: 1`을 확인한 뒤 `galera_new_cluster`, 이어서 node1 · node2(부팅하면 자동 합류).
+
+**11/13 커널 패닉 1회:** node3가 부팅 2.4초 만에 `page_fault` / `apic_timer_interrupt` 패닉으로 멈춤. 강제 종료 후 다시 켜니 정상 부팅. 같은 디스크로 직전까지 정상 부팅했으므로 VirtualBox · 호스트 쪽 일시 오류로 추정. 다시 생기면 VBox.log에서 실행 방식(NEM/Hyper-V)부터 확인.
 
 세 VM을 모두 끄면 Galera 클러스터가 내려간다. `/var/lib/mysql/grastate.dat`에서 `safe_to_bootstrap: 1`(또는 seqno가 가장 큰) 노드에서 `galera_new_cluster`, 나머지는 `systemctl start mariadb`.
