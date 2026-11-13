@@ -3,6 +3,7 @@
 # 사용법: ./remote_backup.sh pull   # 원격 서버의 디렉터리를 로컬로 가져오기 (증분, 날짜별 스냅샷)
 #         ./remote_backup.sh push   # 로컬 백업 파일을 원격 백업 서버로 올리고 체크섬 검증
 set -euo pipefail
+umask 077   # 백업에는 /etc/shadow, DB 전체가 들어가므로 root만 읽게
 
 REMOTE_USER="${REMOTE_USER:-backup}"
 REMOTE_HOST="${REMOTE_HOST:-192.168.56.13}"

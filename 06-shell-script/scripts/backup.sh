@@ -4,6 +4,7 @@
 #   인자가 없으면 /etc 와 /usr/share/nginx/html 을 백업한다.
 #   DB_DUMP=1 ./backup.sh  → MariaDB 전체 덤프도 함께 만든다.
 set -euo pipefail
+umask 077   # 백업에는 /etc/shadow, DB 전체가 들어가므로 root만 읽게
 
 if [ $# -gt 0 ]; then SRC_DIRS=("$@"); else SRC_DIRS=(/etc /usr/share/nginx/html); fi
 DEST_DIR="${DEST_DIR:-/backup/local}"
