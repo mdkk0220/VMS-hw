@@ -1,28 +1,30 @@
 # 진행 상황 (다음에 이어서 할 곳)
 
-> 마지막 갱신: 2026-11-12 (오후)
+> 마지막 갱신: 2026-11-13
 
 ## 지금 위치
-**과제 3 · 3-3 Galera 시작 전** (3-1 Keepalived, 3-2 Replication 완료)
+**과제 6 시작 전** (과제 3 완료)
 
 | 과제 | 상태 |
 | --- | --- |
 | 1 | ✅ 완료 |
 | 2 | ✅ 완료 |
-| 3 | 🔄 3-1 · 3-2 완료 → **다음 3-3 Galera** |
+| 3 | ✅ 완료 |
 | 4 ~ 6 | ⏳ 대기 |
 
 ## 서버 상태
 
 | 서버 | 상태 | 관리 IP | 마지막 스냅샷 |
 | --- | --- | --- | --- |
-| node1 | Rocky 9.8, nginx + Keepalived MASTER(VIP .100), MariaDB 원본 | 192.168.56.11 | `과제3-replication완료` |
-| node2 | Rocky 9.8, nginx + Keepalived BACKUP, MariaDB 복제본 | 192.168.56.12 | `과제3-replication완료` |
-| node3 | Rocky 8.10, bond0(10.10.10.13) 정상 | 192.168.56.13 | `과제2완료` |
+| node1 | Rocky 9.8, nginx + Keepalived MASTER(VIP .100), Galera 노드 | 192.168.56.11 | `과제3완료` |
+| node2 | Rocky 9.8, nginx + Keepalived BACKUP, Galera 노드 | 192.168.56.12 | `과제3완료` |
+| node3 | Rocky 8.10, bond0, Galera 노드(MariaDB 10.5) | 192.168.56.13 | `과제3완료` |
 
 스냅샷은 반드시 VM을 끄고 찍는다(live 스냅샷 멈춤 장애 이후).
 
-## 남은 순서 (11/13 14:00~18:00)
-1. 3-3 Galera: node3에 MariaDB 설치(8.10은 버전 확인 필요), node1·node2 복제 해제, 세 대 wsrep 설정, bootstrap, `wsrep_cluster_size` 3, 노드 1대 중지 · 복귀
-2. 과제 6 백업 스크립트 (초안 backup.sh, remote_backup.sh 실행 · 검증 · cron)
-3. 과제 4 · 5 정리 문서 검토
+## 남은 순서
+1. 과제 6 백업 스크립트 (초안 backup.sh, remote_backup.sh 실행 · 검증 · cron)
+2. 과제 4 · 5: CONCEPTS.md 검토, README에 "개념 위주 정리" 표시
+
+## 다시 켤 때 주의
+세 VM을 모두 끄면 Galera 클러스터가 내려간다. `/var/lib/mysql/grastate.dat`에서 `safe_to_bootstrap: 1`(또는 seqno가 가장 큰) 노드에서 `galera_new_cluster`, 나머지는 `systemctl start mariadb`.
